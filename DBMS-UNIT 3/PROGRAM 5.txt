@@ -1,0 +1,37 @@
+DECLARE
+    CURSOR c1(p_deptno EMP.DEPTNO%TYPE) IS
+        SELECT EID, ENAME, DEPTNO, DEPTNAME, GENDER, AGE, BASICSAL
+        FROM EMP
+        WHERE DEPTNO = p_deptno;
+
+    v_deptno EMP.DEPTNO%TYPE;
+    NO_DEPT_FOUND EXCEPTION;
+
+BEGIN
+    v_deptno := &Enter_Dept_No;
+
+    FOR emp_rec IN c1(v_deptno)
+    LOOP
+        INSERT INTO EMP_BACKUP
+        VALUES (
+            emp_rec.EID,
+            emp_rec.ENAME,
+            emp_rec.DEPTNO,
+            emp_rec.DEPTNAME,
+            emp_rec.GENDER,
+            emp_rec.AGE,
+            emp_rec.BASICSAL
+        );
+    END LOOP;
+
+    IF c1%ROWCOUNT = 0 THEN
+        RAISE NO_DEPT_FOUND;
+    END IF;
+
+    DBMS_OUTPUT.PUT_LINE(c1%ROWCOUNT || ' record(s) inserted into EMP_BACKUP.');
+
+EXCEPTION
+    WHEN NO_DEPT_FOUND THEN
+        DBMS_OUTPUT.PUT_LINE('No employees found for Department No: ' || v_deptno);
+END;
+/

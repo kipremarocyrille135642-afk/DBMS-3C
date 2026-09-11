@@ -1,0 +1,19 @@
+DECLARE
+    v_name   RESULT.SNAME%TYPE;
+    v_result RESULT.RESULT%TYPE;
+BEGIN
+    v_name := '&Enter_Student_Name';
+
+    SELECT RESULT
+    INTO v_result
+    FROM RESULT
+    WHERE SNAME = v_name;
+
+    DBMS_OUTPUT.PUT_LINE('Student Name: ' || v_name);
+    DBMS_OUTPUT.PUT_LINE('Result: ' || v_result);
+
+EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+        DBMS_OUTPUT.PUT_LINE('Student does not exist in RESULT table.');
+END;
+/
