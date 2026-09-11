@@ -1,0 +1,26 @@
+SET SERVEROUTPUT ON;
+
+DECLARE
+  CURSOR emp_cur IS
+    SELECT ENAME, SAL
+    FROM   EMP
+    ORDER BY SAL DESC;
+
+BEGIN
+  FOR emp_rec IN emp_cur LOOP
+    DBMS_OUTPUT.PUT_LINE('Name: ' || emp_rec.ENAME ||
+                          '   Salary: ' || emp_rec.SAL);
+
+    -- Stop after the first 3 rows have been displayed
+    EXIT WHEN emp_cur%ROWCOUNT = 3;
+  END LOOP;
+
+  IF emp_cur%ROWCOUNT = 0 THEN
+    DBMS_OUTPUT.PUT_LINE('No employee records found in EMP table.');
+  END IF;
+
+EXCEPTION
+  WHEN OTHERS THEN
+    DBMS_OUTPUT.PUT_LINE('An error occurred: ' || SQLERRM);
+END;
+/

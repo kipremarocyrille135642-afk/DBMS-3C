@@ -1,0 +1,35 @@
+SET SERVEROUTPUT ON;
+
+DECLARE
+  -- Cursor selecting employees whose name matches a given pattern
+  CURSOR emp_cur IS
+    SELECT EMPNO, ENAME, JOB, SAL
+    FROM   EMP
+    WHERE  ENAME LIKE 'S%';   -- e.g., names starting with 'S'
+
+  v_count NUMBER := 0;
+
+BEGIN
+  FOR emp_rec IN emp_cur LOOP
+
+    DBMS_OUTPUT.PUT_LINE('Emp No : ' || emp_rec.EMPNO);
+    DBMS_OUTPUT.PUT_LINE('Name   : ' || emp_rec.ENAME);
+    DBMS_OUTPUT.PUT_LINE('Job    : ' || emp_rec.JOB);
+    DBMS_OUTPUT.PUT_LINE('Salary : ' || emp_rec.SAL);
+    DBMS_OUTPUT.PUT_LINE('------------------------------');
+
+    v_count := v_count + 1;
+
+  END LOOP;
+
+  IF v_count = 0 THEN
+    DBMS_OUTPUT.PUT_LINE('No matching records found.');
+  ELSE
+    DBMS_OUTPUT.PUT_LINE(v_count || ' record(s) matched the pattern.');
+  END IF;
+
+EXCEPTION
+  WHEN OTHERS THEN
+    DBMS_OUTPUT.PUT_LINE('An error occurred: ' || SQLERRM);
+END;
+/

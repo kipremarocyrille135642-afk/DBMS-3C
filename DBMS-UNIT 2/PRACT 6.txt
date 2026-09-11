@@ -1,0 +1,50 @@
+SET SERVEROUTPUT ON;
+
+DECLARE
+  -- Cursor to fetch all employee records for the given department
+  CURSOR emp_cur (p_deptno EMP.DEPTNO%TYPE) IS
+    SELECT *
+    FROM   EMP
+    WHERE  DEPTNO = p_deptno;
+
+  v_deptno       EMP.DEPTNO%TYPE := &dept_no;   -- input department number
+  v_emp_rec      EMP%ROWTYPE;
+  v_count        NUMBER := 0;
+
+  -- User-defined exception
+  NO_DEPT_FOUND  EXCEPTION;
+
+BEGIN
+  OPEN emp_cur(v_deptno);
+
+  LOOP
+    FETCH emp_cur INTO v_emp_rec;
+    EXIT WHEN emp_cur%NOTFOUND;
+
+    INSERT INTO EMP_BACKUP VALUES v_emp_rec;
+
+    v_count := v_count + 1;
+  END LOOP;
+
+  CLOSE emp_cur;
+
+  -- If no rows were fetched/inserted, raise the user-defined exception
+  IF v_count = 0 THEN
+    RAISE NO_DEPT_FOUND;
+  ELSE
+    DBMS_OUTPUT.PUT_LINE(v_count || ' record(s) for department ' ||
+                          v_deptno || ' inserted into EMP_BACKUP successfully.');
+    COMMIT;
+  END IF;
+
+EXCEPTION
+  WHEN NO_DEPT_FOUND THEN
+    DBMS_OUTPUT.PUT_LINE('No records found for department number ' || v_deptno || '.');
+
+  WHEN OTHERS THEN
+    IF emp_cur%ISOPEN THEN
+      CLOSE emp_cur;
+    END IF;
+    DBMS_OUTPUT.PUT_LINE('An error occurred: ' || SQLERRM);
+END;
+/

@@ -1,0 +1,51 @@
+SET SERVEROUTPUT ON;
+
+DECLARE
+  -- Parameterized cursor: accepts a department number and returns
+  -- the salary details of employees in that department
+  CURSOR emp_cur (p_deptno EMP.DEPTNO%TYPE) IS
+    SELECT ENAME, SAL, NVL(COMM, 0) AS COMM
+    FROM   EMP
+    WHERE  DEPTNO = p_deptno;
+
+  -- Cursor to get the list of distinct departments
+  CURSOR dept_cur IS
+    SELECT DISTINCT DEPTNO
+    FROM   EMP
+    ORDER BY DEPTNO;
+
+  v_dept_total   NUMBER;
+
+BEGIN
+  -- Outer cursor FOR loop: iterate over each department
+  FOR dept_rec IN dept_cur LOOP
+
+    v_dept_total := 0;
+
+    DBMS_OUTPUT.PUT_LINE('--------------------------------------------');
+    DBMS_OUTPUT.PUT_LINE('Department No: ' || dept_rec.DEPTNO);
+    DBMS_OUTPUT.PUT_LINE('--------------------------------------------');
+
+    -- Inner cursor FOR loop: pass the current department number
+    -- as a parameter to the parameterized cursor
+    FOR emp_rec IN emp_cur(dept_rec.DEPTNO) LOOP
+
+      DBMS_OUTPUT.PUT_LINE('   Employee: ' || emp_rec.ENAME ||
+                            '   Basic Salary: ' || emp_rec.SAL);
+
+      -- Accumulate gross salary (Basic + Commission) for the department
+      v_dept_total := v_dept_total + emp_rec.SAL + emp_rec.COMM;
+
+    END LOOP;
+
+    DBMS_OUTPUT.PUT_LINE('   >> Total Gross Salary for Dept ' ||
+                          dept_rec.DEPTNO || ' = ' || v_dept_total);
+    DBMS_OUTPUT.PUT_LINE(' ');
+
+  END LOOP;
+
+EXCEPTION
+  WHEN OTHERS THEN
+    DBMS_OUTPUT.PUT_LINE('An error occurred: ' || SQLERRM);
+END;
+/

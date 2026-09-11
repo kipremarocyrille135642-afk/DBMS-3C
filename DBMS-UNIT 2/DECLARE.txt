@@ -1,0 +1,18 @@
+DECLARE
+  v_deptno EMP.DEPTNO%TYPE := 10;
+BEGIN
+  UPDATE EMP
+  SET    SAL = SAL * 1.10
+  WHERE  DEPTNO = v_deptno;
+
+  IF SQL%ROWCOUNT > 0 THEN
+    DBMS_OUTPUT.PUT_LINE(SQL%ROWCOUNT || ' employee(s) in department ' || v_deptno || ' got a 10% salary raise.');
+  ELSE
+    DBMS_OUTPUT.PUT_LINE('No employees found in department ' || v_deptno || '.');
+  END IF;
+
+EXCEPTION
+  WHEN OTHERS THEN
+    DBMS_OUTPUT.PUT_LINE('An error occurred: ' || SQLERRM);
+END;
+/

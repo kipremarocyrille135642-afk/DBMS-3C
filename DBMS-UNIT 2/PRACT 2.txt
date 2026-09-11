@@ -1,0 +1,166 @@
+-- ============================================================
+-- 0. PRÉPARATION
+-- ============================================================
+SET SERVEROUTPUT ON;
+
+-- Table de journalisation des augmentations (nécessaire pour les
+-- blocs 2 et 3)
+CREATE TABLE emp_update (
+  empno       NUMBER,
+  old_sal     NUMBER,
+  new_sal     NUMBER,
+  update_date DATE
+);
+
+
+-- ============================================================
+-- BLOC 1 : Curseur IMPLICITE — SQL%ROWCOUNT
+-- Augmentation de 10% pour le département 10
+-- ============================================================
+DECLARE
+  v_deptno EMP.DEPTNO%TYPE := 10;
+BEGIN
+  UPDATE EMP
+  SET    SAL = SAL * 1.10
+  WHERE  DEPTNO = v_deptno;
+
+  IF SQL%ROWCOUNT > 0 THEN
+    DBMS_OUTPUT.PUT_LINE(SQL%ROWCOUNT || ' employe(s) du departement '
+                          || v_deptno || ' ont recu une augmentation de 10%.');
+  ELSE
+    DBMS_OUTPUT.PUT_LINE('Aucun employe trouve dans le departement ' || v_deptno || '.');
+  END IF;
+
+  COMMIT;
+
+EXCEPTION
+  WHEN OTHERS THEN
+    DBMS_OUTPUT.PUT_LINE('Erreur : ' || SQLERRM);
+END;
+/
+
+
+-- ============================================================
+-- BLOC 2 : Curseur EXPLICITE uniquement — %ISOPEN et %NOTFOUND
+-- Augmentation de 5% pour le département 20
+-- ============================================================
+DECLARE
+  CURSOR emp_cur IS
+    SELECT EMPNO, SAL
+    FROM   EMP
+    WHERE  DEPTNO = 20
+    FOR UPDATE OF SAL;
+
+  v_empno   EMP.EMPNO%TYPE;
+  v_sal     EMP.SAL%TYPE;
+  v_count   NUMBER := 0;
+
+BEGIN
+  IF NOT emp_cur%ISOPEN THEN
+    OPEN emp_cur;
+  END IF;
+
+  LOOP
+    FETCH emp_cur INTO v_empno, v_sal;
+    EXIT WHEN emp_cur%NOTFOUND;
+
+    UPDATE EMP
+    SET    SAL = SAL * 1.05
+    WHERE  CURRENT OF emp_cur;
+
+    INSERT INTO emp_update (empno, old_sal, new_sal, update_date)
+    VALUES (v_empno, v_sal, v_sal * 1.05, SYSDATE);
+
+    v_count := v_count + 1;
+  END LOOP;
+
+  IF v_count > 0 THEN
+    DBMS_OUTPUT.PUT_LINE(v_count || ' employe(s) du departement 20 ont recu une augmentation de 5%.');
+    DBMS_OUTPUT.PUT_LINE('Enregistrements inseres dans EMP_UPDATE.');
+  ELSE
+    DBMS_OUTPUT.PUT_LINE('Aucun employe trouve dans le departement 20.');
+  END IF;
+
+  IF emp_cur%ISOPEN THEN
+    CLOSE emp_cur;
+  END IF;
+
+  COMMIT;
+
+EXCEPTION
+  WHEN OTHERS THEN
+    IF emp_cur%ISOPEN THEN
+      CLOSE emp_cur;
+    END IF;
+    DBMS_OUTPUT.PUT_LINE('Erreur : ' || SQLERRM);
+END;
+/
+
+
+-- ============================================================
+-- BLOC 3 : Combinaison EXPLICITE + IMPLICITE
+-- %ISOPEN, %NOTFOUND (curseur explicite) + SQL%ROWCOUNT (implicite)
+-- Augmentation de 5% pour le département 20
+-- ============================================================
+DECLARE
+  CURSOR emp_cur IS
+    SELECT EMPNO, SAL
+    FROM   EMP
+    WHERE  DEPTNO = 20
+    FOR UPDATE OF SAL;
+
+  v_empno   EMP.EMPNO%TYPE;
+  v_sal     EMP.SAL%TYPE;
+  v_count   NUMBER := 0;
+
+BEGIN
+  -- ===== Partie curseur EXPLICITE =====
+  IF NOT emp_cur%ISOPEN THEN
+    OPEN emp_cur;
+  END IF;
+
+  LOOP
+    FETCH emp_cur INTO v_empno, v_sal;
+    EXIT WHEN emp_cur%NOTFOUND;   -- attribut du curseur explicite
+
+    -- ===== Partie curseur IMPLICITE =====
+    UPDATE EMP
+    SET    SAL = SAL * 1.05
+    WHERE  CURRENT OF emp_cur;
+
+    IF SQL%ROWCOUNT > 0 THEN     -- attribut du curseur implicite
+      INSERT INTO emp_update (empno, old_sal, new_sal, update_date)
+      VALUES (v_empno, v_sal, v_sal * 1.05, SYSDATE);
+
+      v_count := v_count + 1;
+    END IF;
+  END LOOP;
+
+  IF v_count > 0 THEN
+    DBMS_OUTPUT.PUT_LINE(v_count || ' employe(s) du departement 20 ont recu une augmentation de 5%.');
+    DBMS_OUTPUT.PUT_LINE('Enregistrements inseres dans EMP_UPDATE.');
+  ELSE
+    DBMS_OUTPUT.PUT_LINE('Aucun employe trouve dans le departement 20.');
+  END IF;
+
+  IF emp_cur%ISOPEN THEN         -- attribut du curseur explicite
+    CLOSE emp_cur;
+  END IF;
+
+  COMMIT;
+
+EXCEPTION
+  WHEN OTHERS THEN
+    IF emp_cur%ISOPEN THEN
+      CLOSE emp_cur;
+    END IF;
+    DBMS_OUTPUT.PUT_LINE('Erreur : ' || SQLERRM);
+END;
+/
+
+
+-- ============================================================
+-- VÉRIFICATION (optionnel)
+-- ============================================================
+SELECT * FROM EMP WHERE DEPTNO IN (10, 20);
+SELECT * FROM emp_update;

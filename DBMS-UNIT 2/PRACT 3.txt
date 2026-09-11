@@ -1,0 +1,40 @@
+SET SERVEROUTPUT ON;
+
+DECLARE
+  CURSOR emp_cur IS
+    SELECT ENAME, DEPTNO, SAL
+    FROM   EMP
+    ORDER BY SAL DESC;
+
+  v_ename   EMP.ENAME%TYPE;
+  v_deptno  EMP.DEPTNO%TYPE;
+  v_sal     EMP.SAL%TYPE;
+
+BEGIN
+  OPEN emp_cur;
+
+  LOOP
+    FETCH emp_cur INTO v_ename, v_deptno, v_sal;
+
+    -- Stop once there are no more rows, OR once 5 rows have been fetched
+    EXIT WHEN emp_cur%NOTFOUND OR emp_cur%ROWCOUNT > 5;
+
+    DBMS_OUTPUT.PUT_LINE('Name: ' || v_ename ||
+                          '   Dept: ' || v_deptno ||
+                          '   Salary: ' || v_sal);
+  END LOOP;
+
+  IF emp_cur%ROWCOUNT = 0 THEN
+    DBMS_OUTPUT.PUT_LINE('No employee records found in EMP table.');
+  END IF;
+
+  CLOSE emp_cur;
+
+EXCEPTION
+  WHEN OTHERS THEN
+    IF emp_cur%ISOPEN THEN
+      CLOSE emp_cur;
+    END IF;
+    DBMS_OUTPUT.PUT_LINE('An error occurred: ' || SQLERRM);
+END;
+/

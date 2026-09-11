@@ -1,0 +1,38 @@
+SET SERVEROUTPUT ON;
+
+DECLARE
+  -- Explicit cursor to fetch all records from CUSTOMER table
+  CURSOR cust_cur IS
+    SELECT *
+    FROM   CUSTOMER;
+
+  v_cust_rec  CUSTOMER%ROWTYPE;
+
+BEGIN
+  OPEN cust_cur;
+
+  LOOP
+    FETCH cust_cur INTO v_cust_rec;
+    EXIT WHEN cust_cur%NOTFOUND;
+
+    DBMS_OUTPUT.PUT_LINE('Customer ID   : ' || v_cust_rec.CUST_ID);
+    DBMS_OUTPUT.PUT_LINE('Customer Name : ' || v_cust_rec.CUST_NAME);
+    DBMS_OUTPUT.PUT_LINE('City          : ' || v_cust_rec.CITY);
+    DBMS_OUTPUT.PUT_LINE('--------------------------------------');
+
+  END LOOP;
+
+  IF cust_cur%ROWCOUNT = 0 THEN
+    DBMS_OUTPUT.PUT_LINE('No records found in CUSTOMER table.');
+  END IF;
+
+  CLOSE cust_cur;
+
+EXCEPTION
+  WHEN OTHERS THEN
+    IF cust_cur%ISOPEN THEN
+      CLOSE cust_cur;
+    END IF;
+    DBMS_OUTPUT.PUT_LINE('An error occurred: ' || SQLERRM);
+END;
+/
