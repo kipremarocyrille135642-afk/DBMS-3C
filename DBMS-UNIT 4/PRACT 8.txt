@@ -1,0 +1,58 @@
+SET SERVEROUTPUT ON;
+
+-- ============================================================
+-- CREATE THE PROCEDURE (with IN and OUT parameters)
+-- ============================================================
+CREATE OR REPLACE PROCEDURE SEARCH_EMP (
+  p_empno   IN  EMP.EMPNO%TYPE,
+  p_ename   OUT EMP.ENAME%TYPE,
+  p_message OUT VARCHAR2
+)
+IS
+  v_ename EMP.ENAME%TYPE;
+BEGIN
+  SELECT ENAME
+  INTO   v_ename
+  FROM   EMP
+  WHERE  EMPNO = p_empno;
+
+  -- Employee number found
+  p_ename   := v_ename;
+  p_message := 'Employee number ' || p_empno || ' is present in the table.';
+
+EXCEPTION
+  WHEN NO_DATA_FOUND THEN
+    p_ename   := NULL;
+    p_message := 'Employee number ' || p_empno || ' is NOT present in the table.';
+
+  WHEN TOO_MANY_ROWS THEN
+    p_ename   := NULL;
+    p_message := 'Error: Multiple records found for employee number ' || p_empno || '.';
+
+  WHEN OTHERS THEN
+    p_ename   := NULL;
+    p_message := 'An unexpected error occurred: ' || SQLERRM;
+END SEARCH_EMP;
+/
+
+
+-- ============================================================
+-- CALL THE SEARCH_EMP PROCEDURE FROM A PL/SQL BLOCK
+-- ============================================================
+DECLARE
+  v_empno   EMP.EMPNO%TYPE := &emp_no;
+  v_ename   EMP.ENAME%TYPE;
+  v_message VARCHAR2(200);
+BEGIN
+  SEARCH_EMP(v_empno, v_ename, v_message);
+
+  IF v_ename IS NOT NULL THEN
+    DBMS_OUTPUT.PUT_LINE('Employee No   : ' || v_empno);
+    DBMS_OUTPUT.PUT_LINE('Employee Name : ' || v_ename);
+    DBMS_OUTPUT.PUT_LINE('Status        : ' || v_message);
+  ELSE
+    DBMS_OUTPUT.PUT_LINE('Status : ' || v_message);
+  END IF;
+
+END;
+/

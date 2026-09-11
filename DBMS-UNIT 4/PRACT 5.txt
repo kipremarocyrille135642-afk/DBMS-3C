@@ -1,0 +1,74 @@
+SET SERVEROUTPUT ON;
+
+-- ============================================================
+-- 1. CREATE THE ACCOUNT TABLE
+-- ============================================================
+CREATE TABLE ACCOUNT (
+  ACNO     NUMBER(10)      PRIMARY KEY,
+  CNAME    VARCHAR2(50)    NOT NULL,
+  BNAME    VARCHAR2(50)    NOT NULL,
+  BALANCE  NUMBER(12,2)    DEFAULT 0
+);
+
+
+-- ============================================================
+-- 2. INSERT SOME SAMPLE RECORDS
+-- ============================================================
+INSERT INTO ACCOUNT VALUES (101, 'Rajesh Sharma',  'City Branch',     15000.50);
+INSERT INTO ACCOUNT VALUES (102, 'Priya Mehta',    'Lake Branch',     42500.00);
+INSERT INTO ACCOUNT VALUES (103, 'Amit Verma',     'Main Branch',      8750.75);
+INSERT INTO ACCOUNT VALUES (104, 'Sneha Kulkarni', 'City Branch',    120300.00);
+
+COMMIT;
+
+
+-- ============================================================
+-- 3. CREATE THE FUNCTION
+-- ============================================================
+CREATE OR REPLACE FUNCTION get_balance (
+  p_acno IN ACCOUNT.ACNO%TYPE
+) RETURN NUMBER
+IS
+  v_balance ACCOUNT.BALANCE%TYPE;
+BEGIN
+  SELECT BALANCE
+  INTO   v_balance
+  FROM   ACCOUNT
+  WHERE  ACNO = p_acno;
+
+  RETURN v_balance;
+
+EXCEPTION
+  WHEN NO_DATA_FOUND THEN
+    RETURN -1;   -- sentinel value indicating account not found
+
+  WHEN OTHERS THEN
+    RETURN -2;   -- sentinel value indicating an unexpected error
+END get_balance;
+/
+
+
+-- ============================================================
+-- 4. CALL THE FUNCTION FROM A PL/SQL BLOCK
+-- ============================================================
+DECLARE
+  v_acno    ACCOUNT.ACNO%TYPE := &acc_no;
+  v_balance NUMBER;
+BEGIN
+  v_balance := get_balance(v_acno);
+
+  IF v_balance = -1 THEN
+    DBMS_OUTPUT.PUT_LINE('No account found with account number ' || v_acno || '.');
+  ELSIF v_balance = -2 THEN
+    DBMS_OUTPUT.PUT_LINE('An unexpected error occurred while fetching the balance.');
+  ELSE
+    DBMS_OUTPUT.PUT_LINE('Balance for account number ' || v_acno || ' is ' || v_balance || '.');
+  END IF;
+END;
+/
+
+
+-- ============================================================
+-- 5. CALL THE FUNCTION FROM THE COMMAND LINE
+-- ============================================================
+SELECT get_balance(101) AS balance_result FROM DUAL;

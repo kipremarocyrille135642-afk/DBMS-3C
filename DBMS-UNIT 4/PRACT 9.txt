@@ -1,0 +1,41 @@
+SET SERVEROUTPUT ON;
+
+-- ============================================================
+-- CREATE THE FUNCTION
+-- ============================================================
+CREATE OR REPLACE FUNCTION get_square (
+  p_num IN NUMBER
+) RETURN NUMBER
+IS
+  v_result NUMBER;
+BEGIN
+  v_result := p_num * p_num;
+  RETURN v_result;
+END get_square;
+/
+
+
+-- ============================================================
+-- EXECUTE THE FUNCTION USING A SEPARATE PL/SQL BLOCK
+-- ============================================================
+DECLARE
+  v_num    NUMBER := &number;
+  v_square NUMBER;
+BEGIN
+  v_square := get_square(v_num);
+  DBMS_OUTPUT.PUT_LINE('The square of ' || v_num || ' is ' || v_square || '.');
+END;
+/
+
+
+-- ============================================================
+-- EXECUTE THE FUNCTION WITHOUT A PL/SQL BLOCK (COMMAND LINE)
+-- ============================================================
+
+-- Option 1: Using SELECT directly on SQL command line
+SELECT get_square(5) AS square_result FROM DUAL;
+
+-- Option 2: Using a bind variable and EXEC/PRINT on SQL*Plus command line
+VARIABLE g_result NUMBER
+EXEC :g_result := get_square(7);
+PRINT g_result

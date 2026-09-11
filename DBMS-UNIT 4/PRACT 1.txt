@@ -1,0 +1,25 @@
+-- ============================================================
+-- 1. CREATE THE PROCEDURE (no parameters)
+-- ============================================================
+CREATE OR REPLACE PROCEDURE show_message
+IS
+BEGIN
+  DBMS_OUTPUT.PUT_LINE('Hello! Welcome to PL/SQL Programming.');
+END show_message;
+/
+
+-- ============================================================
+-- 2. CALL THE PROCEDURE FROM A SEPARATE PL/SQL BLOCK
+-- ============================================================
+SET SERVEROUTPUT ON;
+
+BEGIN
+  show_message;
+END;
+/
+
+-- ============================================================
+-- 3. CALL THE PROCEDURE FROM THE COMMAND LINE (SQL*Plus / SQL Developer)
+-- ============================================================
+SET SERVEROUTPUT ON;
+EXECUTE show_message;
